@@ -1,0 +1,4 @@
+In a txt file I want to pass all the job requirement and description (e.g. Job.txt)
+And One file will be of my current resume
+And Another file will be of what i did new just now (optional)
+Result - should be new pdf file in similar formate of Current Resume but updated according to Job.txt 
