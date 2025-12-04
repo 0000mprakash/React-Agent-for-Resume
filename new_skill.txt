@@ -1,0 +1,3 @@
+Made a working Agent using python and langchain and also used Docker and stored the database in PostgreSQl and also passed relevant information using api(flask api) to another application for making Dashboard
+
+Learnt video editing as well and made a video for my new youtube channel

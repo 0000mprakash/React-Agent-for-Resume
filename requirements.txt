@@ -5,3 +5,4 @@ langchain-classic
 # chromadb
 langchain_community
 pypdf2
+reportlab

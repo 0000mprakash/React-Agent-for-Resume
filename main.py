@@ -5,6 +5,8 @@ from langchain_openai import AzureChatOpenAI
 from langchain_core.tools import tool
 import subprocess
 from typing import List
+from langchain.tools import tool
+from reportlab.pdfgen import canvas
 import PyPDF2
 import webbrowser
 from dotenv import load_dotenv
@@ -12,6 +14,42 @@ import os
 
 load_dotenv() 
 # ---------------------------Tools---------------------------------------------------
+@tool
+def read_tex(path: str) -> str:
+    """
+    Reads the content of a LaTeX (.tex) file.
+    """
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            return f.read()
+    except Exception as e:
+        return f"Error reading tex file: {e}"
+    
+@tool
+def write_tex(content: str, output_path: str) -> str:
+    """
+    Writes LaTeX content to a new .tex file.
+    """
+    try:
+        with open(output_path, 'w', encoding='utf-8') as f:
+            f.write(content)
+        return f"LaTeX file saved to {output_path}"
+    except Exception as e:
+        return f"Error writing tex file: {e}"
+    
+@tool
+def compile_latex(tex_path: str) -> str:
+    """
+    Compiles a LaTeX file into PDF using pdflatex.
+    """
+    try:
+        subprocess.run(
+            ["pdflatex", tex_path],
+            check=True
+        )
+        return "PDF successfully compiled."
+    except Exception as e:
+        return f"Error compiling LaTeX: {e}"
 
 @tool
 def read_pdf(path: str) -> str:
@@ -29,6 +67,25 @@ def read_pdf(path: str) -> str:
     
     except Exception as e:
         return f"Error reading PDF: {str(e)}"
+    
+@tool
+def read_txt(path: str) -> str:
+    """
+    Reads the content of a text (.txt) file and returns it as a string.
+    """
+    try:
+        with open(path, 'r', encoding='utf-8') as file:
+            text = file.read()
+
+        return text if text else "The file is empty."
+
+    except FileNotFoundError:
+        return "Error: File not found."
+    except UnicodeDecodeError:
+        return "Error: Could not decode file as UTF-8 text."
+    except Exception as e:
+        return f"Error reading TXT: {str(e)}"
+
     
 @tool
 def list_files_with_query(query: str) -> List[str]:
@@ -54,6 +111,31 @@ def list_files_with_query(query: str) -> List[str]:
 
     except Exception as e:
         return [f"Error searching for files: {str(e)}"]
+    
+
+
+@tool
+def create_pdf(text: str, output_path: str) -> str:
+    """
+    Creates a PDF file with the provided text and saves it to the given path.
+    Example:
+        create_pdf("Hello World", "output.pdf")
+    """
+    try:
+        c = canvas.Canvas(output_path)
+        text_object = c.beginText(40, 800)
+
+        # Add text line-by-line
+        for line in text.split("\n"):
+            text_object.textLine(line)
+
+        c.drawText(text_object)
+        c.save()
+
+        return f"PDF successfully created at: {output_path}"
+    except Exception as e:
+        return f"Error creating PDF: {str(e)}"
+
 
 
 #-------------------------------------------------------------------------------
@@ -68,7 +150,7 @@ llm = AzureChatOpenAI(
 # -------------------------------------------   
 agent_graph = create_agent(
     model=llm,
-    tools=[read_pdf,list_files_with_query]
+    tools=[read_pdf,list_files_with_query,read_txt,create_pdf,read_tex,write_tex,compile_latex],
 )
 
 

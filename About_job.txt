@@ -1,0 +1,66 @@
+About the job
+About Company,
+
+
+
+Droisys is an innovation technology company focused on helping companies accelerate their digital initiatives from strategy and planning through execution. We leverage deep technical expertise, Agile methodologies, and data-driven intelligence to modernize systems of engagement and simplify human/tech interaction.
+
+
+Amazing things happen when we work in environments where everyone feels a true sense of belonging and when candidates have the requisite skills and opportunities to succeed. At Droisys, we invest in our talent and support career growth, and we are always on the lookout for amazing talent who can contribute to our growth by delivering top results for our clients. Join us to challenge yourself and accomplish work that matters.
+
+
+We’re hiring Python Backend developer in Bengaluru, Karnataka, India , It's Hybrid role .
+
+
+
+Need 10+ Yr relevant IT experience .
+
+
+Role Overview
+
+
+
+We are hiring a Python Engineer with a strong backend foundation to help us build scalable, secure, and intelligent systems. You’ll be building at the core of AI innovation—working with Large Language Models (LLMs) and cutting-edge agent development frameworks like Lang Graph, Crew AI, and the Model Context Protocol (MCP). Our platform enables Agent-to-Agent communication and autonomous decision-making, moving beyond traditional LLM applications into structured, enterprise-grade action flows. This is your chance to build the future of agentic AI systems and shape how intelligent agents collaborate, reason, and execute in real-world enterprise processes.
+
+
+Key Responsibilities
+
+
+
+• Develop scalable backend systems using Python (Django, Fast API)
+
+• Design and maintain secure RESTful APIs and backend services
+• Model and manage data using relational databases and ORMs
+• Build containerized services using Docker; deploy and debug on Linux
+• Integrate AI features using LLMs or external AI APIs
+
+• Collaborate on frontend features using JavaScript/TypeScript and frameworks like Svelte, React, or Angular
+
+• Implement unit and integration tests, CI/CD pipelines, and observability tools
+• Ensure security, performance, and compliance across services
+
+
+Technical Skills:
+
+
+
+• Python, Django, Fast API
+• REST API design and development
+• SQL databases (PostgreSQL/MySQL) and ORMs (Django ORM, SQL Alchemy)
+• Docker, Git, CI/CD pipelines
+• JavaScript/TypeScript (basic proficiency); modern frontend frameworks
+
+
+Bonus Points For
+
+
+
+• Asynchronous Python (e.g., asyncio, Fast API async routes)
+• Event-driven architecture (Kafka, RabbitMQ)
+• Kubernetes, Helm, or IaC tools (Terraform, Ansible)
+• Security/auth (OAuth2, OpenID), RBAC
+• Monitoring/observability (Prometheus, Grafana, ELK)
+• Experience with AI model serving, ETL pipelines, or compliance standards
+
+
+Droisys is an equal opportunity employer. We do not discriminate based on race, religion, color, national origin, gender, gender expression, sexual orientation, age, marital status, veteran status, disability status or any other characteristic protected by law. Droisys believes in diversity, inclusion, and belonging, and we are committed to fostering a diverse work environment
