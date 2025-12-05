@@ -43,9 +43,11 @@ def compile_latex(tex_path: str) -> str:
     Compiles a LaTeX file into PDF using pdflatex.
     """
     try:
+        tex_path = os.path.abspath(tex_path)
         subprocess.run(
             ["pdflatex", tex_path],
-            check=True
+            check=True,
+            cwd=os.path.dirname(tex_path)
         )
         return "PDF successfully compiled."
     except Exception as e:
@@ -102,7 +104,11 @@ def list_files_with_query(query: str) -> List[str]:
         files_in_directory = os.listdir(current_directory)
 
         # Filter files that contain the query string in their names
-        matching_files = [file for file in files_in_directory if query.lower() in file.lower()]
+        matching_files = [
+            os.path.abspath(os.path.join(current_directory, file))
+            for file in files_in_directory
+            if query.lower() in file.lower()
+        ]
 
         if not matching_files:
             return [f"No files found with '{query}' in the name."]
@@ -147,10 +153,26 @@ llm = AzureChatOpenAI(
     azure_endpoint=os.getenv("azure_endpoint"),   # e.g. https://xxx.openai.azure.com/
     azure_deployment="gpt-4o-mini", 
 )
+system_message = """
+                You are an AI agent running inside a Python environment with access to file manipulation tools (read, write, list, compile, create PDF).
+
+IMPORTANT RULES:
+- Always use ABSOLUTE file paths when interacting with any tool.
+- Never assume your working directory. Always resolve the full absolute path before calling a tool.
+- When you list files, always convert filenames into absolute paths before using them.
+- If a tool returns a path, treat it as an absolute path and use it directly.
+- When compiling LaTeX, always pass the absolute path to the .tex file.
+- When writing files, ensure the directory exists or inform the user in a clear way.
+
+Your job is to figure out what the user wants, gather required file paths, and call the correct tools in the correct order.
+Only call tools when necessary.
+            """
 # -------------------------------------------   
 agent_graph = create_agent(
     model=llm,
     tools=[read_pdf,list_files_with_query,read_txt,create_pdf,read_tex,write_tex,compile_latex],
+    system_prompt=system_message
+    
 )
 
 
