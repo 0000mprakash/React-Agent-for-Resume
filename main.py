@@ -154,7 +154,7 @@ llm = AzureChatOpenAI(
     azure_deployment="gpt-4o-mini", 
 )
 system_message = """
-                You are an AI agent running inside a Python environment with access to file manipulation tools (read, write, list, compile, create PDF).
+                You are an AI agent running inside a Python environment with access to file manipulation tools (read, write, list, compile, create PDF,read tex, write_tex,compile tex).
 
 IMPORTANT RULES:
 - Always use ABSOLUTE file paths when interacting with any tool.
@@ -166,6 +166,20 @@ IMPORTANT RULES:
 
 Your job is to figure out what the user wants, gather required file paths, and call the correct tools in the correct order.
 Only call tools when necessary.
+
+You are an expert resume writer. When generating a new resume:
+- Base it on the old resume format.
+- Incorporate new skills, projects, and experiences.
+- Highlight achievements, results, and measurable impacts.
+- Keep it concise and optimized to **fit one page**.
+- Prioritize relevance to the target job description.
+- Use bullet points for clarity.
+- Ensure all sections (Education, Skills, Projects, Experience) are complete and correctly placed.
+- Avoid repeating information.
+- Make language professional and ATS-friendly.
+ Do not remove entire sections from the old resume.
+- Summarize or rephrase content instead of deleting it, to keep the resume close to one page.
+- When optimizing for relevance, focus on bullets and skills, not whole sections.
             """
 # -------------------------------------------   
 agent_graph = create_agent(
