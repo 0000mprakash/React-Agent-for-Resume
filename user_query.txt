@@ -1,0 +1,18 @@
+I have uploaded three files:
+1. main.tex — this is my original resume and formatting template.
+2. new_skill.txt — new skills I have learned.
+3. About_job.txt — the job description.
+
+Generate a new resume (new.tex) that:
+
+- Keeps the exact formatting, structure, sections, and LaTeX environments of main.tex.
+- Includes all relevant skills and bullet points from main.tex and new_skill.txt.
+- Adds new skills only when appropriate to the job description.
+- Keeps ALL bullets that are relevant or can be made relevant. 
+- Only remove a bullet if it is clearly irrelevant AND cannot be adapted to match the job.
+- Rephrase or compress content to keep the resume compact and close to one page.
+- Optimize for ATS to achieve the highest possible match score.
+- Do NOT shorten the resume unnecessarily.
+- The final output should be a clean, compilable LaTeX file named new.tex.
+
+Only produce the rewritten LaTeX content; do not generate PDFs unless asked.

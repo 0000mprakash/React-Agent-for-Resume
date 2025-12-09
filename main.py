@@ -154,32 +154,61 @@ llm = AzureChatOpenAI(
     azure_deployment="gpt-4o-mini", 
 )
 system_message = """
-                You are an AI agent running inside a Python environment with access to file manipulation tools (read, write, list, compile, create PDF,read tex, write_tex,compile tex).
+                You are an AI agent running inside a Python environment with access to file manipulation tools 
+(read, write, list, compile, create PDF, read_tex, write_tex, compile_latex).
 
-IMPORTANT RULES:
-- Always use ABSOLUTE file paths when interacting with any tool.
-- Never assume your working directory. Always resolve the full absolute path before calling a tool.
-- When you list files, always convert filenames into absolute paths before using them.
-- If a tool returns a path, treat it as an absolute path and use it directly.
-- When compiling LaTeX, always pass the absolute path to the .tex file.
-- When writing files, ensure the directory exists or inform the user in a clear way.
+IMPORTANT TOOL RULES:
+- Always use ABSOLUTE file paths for every tool call.
+- Never assume your working directory; resolve paths explicitly.
+- When listing files, always convert results to absolute paths before using them.
+- When writing a file, ensure the directory exists or clearly warn the user.
+- When compiling LaTeX, always provide the absolute path of the .tex file.
 
-Your job is to figure out what the user wants, gather required file paths, and call the correct tools in the correct order.
-Only call tools when necessary.
+RESUME REWRITE INSTRUCTIONS:
+You are a senior ATS-optimization expert and an expert resume writer.
 
-You are an expert resume writer. When generating a new resume:
-- Base it on the old resume format.
-- Incorporate new skills, projects, and experiences.
-- Highlight achievements, results, and measurable impacts.
-- Keep it concise and optimized to **fit one page**.
-- Prioritize relevance to the target job description.
-- Use bullet points for clarity.
-- Ensure all sections (Education, Skills, Projects, Experience) are complete and correctly placed.
-- Avoid repeating information.
-- Make language professional and ATS-friendly.
- Do not remove entire sections from the old resume.
-- Summarize or rephrase content instead of deleting it, to keep the resume close to one page.
-- When optimizing for relevance, focus on bullets and skills, not whole sections.
+When generating a new resume (new.tex):
+1. **Always preserve the full structure and formatting of the original LaTeX file (main.tex).**
+   - Do NOT remove or rename entire sections.
+   - Only modify the *content inside* sections.
+
+2. **Relevance Handling (VERY IMPORTANT):**
+   - Include ALL bullets, skills, and projects that are relevant to the target job.
+   - If a bullet is not an exact match, but still supports the candidate’s competence, KEEP IT.
+   - Only remove a bullet if it is clearly irrelevant AND keeping it would harm ATS relevance.
+   - When in doubt, KEEP the bullet but rewrite it to be more compact and relevant.
+
+3. **Old Resume + New Skills + Job Description Logic:**
+   - Use main.tex as the NOT-to-be-modified template.
+   - Use new_skill.txt to add new skills.
+   - Use About_job.txt ONLY to judge relevance and keyword importance.
+   - NEVER delete content purely because it’s not mentioned in About_job.txt.
+   - Instead, adapt and rewrite to fit the role.
+
+4. **Compactness Requirements:**
+   - Keep content concise and compact, but **do NOT shorten so aggressively that meaning or achievements are lost**.
+   - Use strong, metric-driven bullet points.
+   - Prefer rephrasing over deleting.
+
+5. **ATS Optimization Rules:**
+   - Include exact keywords from About_job.txt naturally in bullets.
+   - Preserve technical depth.
+   - Ensure the resume stays close to **one page**, but don't reduce quality for length.
+   - Output must score as close as possible to 100% ATS fit without sacrificing completeness.
+
+6. **Output Requirements:**
+   - Produce a single LaTeX document that preserves the formatting style of main.tex exactly.
+   - Only change the content, not the structural environment.
+   - Ensure the result compiles cleanly.
+
+You must think step-by-step:
+- Read all user-provided files
+- Extract job keywords
+- Identify relevant content
+- Rewrite, expand, compact, and optimize without deleting valuable content
+- Maintain format compatibility
+- Produce new.tex
+
             """
 # -------------------------------------------   
 agent_graph = create_agent(
@@ -191,10 +220,11 @@ agent_graph = create_agent(
 
 
 
-messa = input("Write what python code you want to create and execute: ")
-for step in agent_graph.stream(
-    {"messages": [{"role": "user", "content": messa}]}
-):
+user_query = input("Write what python code you want to create and execute: ")
+# with open("user_query.txt", "r", encoding="utf-8") as f:
+#     user_query = f.read()
+
+for step in agent_graph.stream({"messages": [{"role": "user", "content": user_query}] }):
     for update in step.values():
         for message in update.get("messages", []):
             message.pretty_print()
