@@ -8,6 +8,8 @@ from typing import List
 from langchain.tools import tool
 from reportlab.pdfgen import canvas
 import PyPDF2
+import re
+import json
 import webbrowser
 from dotenv import load_dotenv
 import os
@@ -24,6 +26,90 @@ def read_tex(path: str) -> str:
             return f.read()
     except Exception as e:
         return f"Error reading tex file: {e}"
+
+@tool
+def parse_tex_to_json(path: str) -> dict:
+    r"""
+    Robust LaTeX resume parser for your specific template.
+    Handles:
+    - multiline \resumeSubheading
+    - bullets in any \item or bare dash format
+    - skill lines without \item
+    """
+
+    if not os.path.exists(path):
+        return {"error": f"File '{path}' not found."}
+
+    with open(path, "r", encoding="utf-8") as f:
+        tex = f.read()
+
+    data = {}
+
+    # ---- Extract sections ----
+    section_regex = r"\\section\{\\textbf\{([^}]+)\}\}(.*?)((?=\\section)|\Z)"
+    sections = re.findall(section_regex, tex, flags=re.DOTALL)
+
+    for section_name, body, _ in sections:
+        key = section_name.strip()
+        data[key] = []
+
+        # ---- Extract resumeSubheading (multiline, tolerant) ----
+        sub_regex = (
+            r"\\resumeSubheading\s*"
+            r"\{([^}]*)\}\s*"     # title
+            r"\{([^}]*)\}\s*"     # date
+            r"\{([^}]*)\}\s*"     # role
+            r"\{([^}]*)\}"        # location
+        )
+
+        sub_items = list(re.finditer(sub_regex, body, flags=re.DOTALL))
+
+        if sub_items:
+            for i, m in enumerate(sub_items):
+                entry = {
+                    "title": m.group(1).strip(),
+                    "date": m.group(2).strip(),
+                    "role": m.group(3).strip(),
+                    "location": m.group(4).strip(),
+                    "bullets": []
+                }
+
+                start = m.end()
+                end = sub_items[i + 1].start() if i + 1 < len(sub_items) else len(body)
+                block = body[start:end]
+
+                # bullets: \item{...} or \item ... or dash bullets
+                bullets = re.findall(r"\\item\s*\{([^}]*)\}", block)
+                if not bullets:
+                    bullets = re.findall(r"\\item\s+([^\n]+)", block)
+                if not bullets:
+                    bullets = re.findall(r"-\s*(.*)", block)
+
+                entry["bullets"] = [b.strip() for b in bullets if b.strip()]
+                data[key].append(entry)
+
+        else:
+            # ---- Skills fallback: grab meaningful lines ----
+            lines = [
+                l.strip()
+                for l in body.split("\n")
+                if l.strip() and not l.strip().startswith("%")
+            ]
+
+            cleaned = []
+            for l in lines:
+                # remove LaTeX markup
+                l = re.sub(r"\\textbf\{([^}]*)\}", r"\1:", l)
+                l = l.replace("\\item", "").strip()
+                l = re.sub(r"[{}]", "", l).strip()
+                if ":" in l:
+                    cleaned.append(l)
+
+            if cleaned:
+                data[key] = cleaned
+
+    return json.dumps(data, indent=2)
+
     
 @tool
 def write_tex(content: str, output_path: str) -> str:
@@ -213,7 +299,7 @@ You must think step-by-step:
 # -------------------------------------------   
 agent_graph = create_agent(
     model=llm,
-    tools=[read_pdf,list_files_with_query,read_txt,create_pdf,read_tex,write_tex,compile_latex],
+    tools=[read_pdf,list_files_with_query,read_txt,create_pdf,read_tex,write_tex,compile_latex,parse_tex_to_json],
     system_prompt=system_message
     
 )
