@@ -108,7 +108,48 @@ def parse_tex_to_json(path: str) -> dict:
             if cleaned:
                 data[key] = cleaned
 
-    return json.dumps(data, indent=2)
+    return data
+
+@tool
+def convert_json_to_tex(json_data: dict, output_path: str) -> str:
+    """
+    Converts a JSON structure back into a LaTeX .tex format.
+    
+    Arguments:
+    - json_data (dict): The parsed JSON data representing the LaTeX structure.
+    - output_path (str): The path where the LaTeX .tex file should be saved.
+    
+    Returns:
+    - str: The generated LaTeX code as a string.
+    """
+
+    latex_code = ""
+
+    # ---- Generate LaTeX sections ----
+    for section, content in json_data.items():
+        latex_code += f"\\section{{\\textbf{{{section}}}}}\n"
+
+        # ---- Process each resumeSubheading or skills ----
+        for entry in content:
+            if isinstance(entry, dict):  # This is a subheading with bullets
+                latex_code += "\\resumeSubheading"
+                latex_code += f"{{{entry['title']}}}{{{entry['date']}}}{{{entry['role']}}}{{{entry['location']}}}\n"
+                
+                # Adding bullets
+                for bullet in entry.get('bullets', []):
+                    latex_code += f"\\item{{{bullet}}}\n"
+
+            else:  # This is a skill line (from cleaned section)
+                latex_code += f"\\item {entry}\n"
+
+        latex_code += "\n"
+
+    # Save the generated LaTeX code to a .tex file
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.write(latex_code)
+
+    return latex_code
+
 
     
 @tool
@@ -227,6 +268,75 @@ def create_pdf(text: str, output_path: str) -> str:
         return f"PDF successfully created at: {output_path}"
     except Exception as e:
         return f"Error creating PDF: {str(e)}"
+    
+
+    
+def orchestrator_stream(resume_path, job_path, new_skill_path=None, template_path=None, output_dir="output"):
+    import json
+    import os
+
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Step 1: Parse LaTeX resume to JSON
+    print("Parsing LaTeX resume to JSON...")
+    resume_json = parse_tex_to_json.func(resume_path)  # dict
+
+    # Step 2: Read job description
+    print("Reading job description...")
+    job_text = read_txt.func(job_path)
+
+    # Step 3: Read new skills if provided
+    new_skills = ""
+    if new_skill_path:
+        new_skills = read_txt.func(new_skill_path)
+
+    # Step 4: Prepare agent prompt
+    prompt = f"""
+    You are updating a JSON resume for a job description and new skills.
+    Resume JSON:
+    {resume_json}
+
+    Job Description:
+    {job_text}
+
+    New Skills / Achievements:
+    {new_skills}
+
+    Output the updated resume as JSON. Preserve all structure; rewrite bullets for relevance and ATS optimization.
+    """
+
+    # Step 5: Stream agent response
+    updated_json_str = ""
+    print("Updating resume JSON with agent...")
+    for step in agent_graph.stream({"messages": [{"role": "user", "content": prompt}]}):
+        for update in step.values():
+            for message in update.get("messages", []):
+                message.pretty_print()  # real-time streaming
+                if "content" in message:
+                    updated_json_str += message["content"]
+
+    # Step 6: Parse JSON returned by agent, fallback if invalid
+    try:
+        updated_json = json.loads(updated_json_str)
+    except Exception as e:
+        print(f"Warning: Failed to parse agent output as JSON: {e}")
+        print("Using original resume JSON as fallback.")
+        updated_json = resume_json
+
+    # Step 7: Convert JSON to LaTeX
+    print("Converting updated JSON to LaTeX...")
+    updated_tex_path = os.path.join(output_dir, "updated.tex")
+    convert_json_to_tex.func(updated_json, updated_tex_path)
+
+    # Step 8: Compile LaTeX to PDF
+    print("Compiling LaTeX to PDF...")
+    compile_latex.func(updated_tex_path)
+    updated_pdf_path = os.path.join(output_dir, "updated.pdf")
+
+    print(f"Updated LaTeX saved at: {updated_tex_path}")
+    print(f"Updated PDF saved at: {updated_pdf_path}")
+
+    return updated_tex_path, updated_pdf_path
 
 
 
@@ -299,18 +409,24 @@ You must think step-by-step:
 # -------------------------------------------   
 agent_graph = create_agent(
     model=llm,
-    tools=[read_pdf,list_files_with_query,read_txt,create_pdf,read_tex,write_tex,compile_latex,parse_tex_to_json],
+    tools=[read_pdf,list_files_with_query,read_txt,create_pdf,read_tex,write_tex,compile_latex,parse_tex_to_json,convert_json_to_tex],
     system_prompt=system_message
     
 )
 
 
 
-user_query = input("Write what python code you want to create and execute: ")
-# with open("user_query.txt", "r", encoding="utf-8") as f:
-#     user_query = f.read()
+# user_query = input("Write what python code you want to create and execute: ")
+# # with open("user_query.txt", "r", encoding="utf-8") as f:
+# #     user_query = f.read()
 
-for step in agent_graph.stream({"messages": [{"role": "user", "content": user_query}] }):
-    for update in step.values():
-        for message in update.get("messages", []):
-            message.pretty_print()
+# for step in agent_graph.stream({"messages": [{"role": "user", "content": user_query}] }):
+#     for update in step.values():
+#         for message in update.get("messages", []):
+#             message.pretty_print()
+
+resume_path = "main.tex"
+job_path = "About_job.txt"
+new_skill_path = "new_skill.txt"  # optional
+
+updated_tex, updated_pdf = orchestrator_stream(resume_path, job_path, new_skill_path)
